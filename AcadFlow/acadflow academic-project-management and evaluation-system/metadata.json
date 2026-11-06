@@ -1,0 +1,6 @@
+{
+  "name": "AcadFlow — Academic Project Management & Evaluation System",
+  "description": "Production-oriented academic project management, proposal lifecycle, and multi-rubric evaluation platform for universities.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

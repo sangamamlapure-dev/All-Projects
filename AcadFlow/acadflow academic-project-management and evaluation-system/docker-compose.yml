@@ -1,0 +1,59 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: acadflow_app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - HOST=0.0.0.0
+      - DATABASE_URL=mysql://acadflow_user:acadflow_secure_password@mysql:3306/acadflow_prod
+      - SESSION_SECRET=acadflow_production_session_secret_change_in_real_env
+      - CORS_ORIGIN=http://localhost:3000
+      - UPLOAD_DIR=./uploads
+      - MAX_FILE_SIZE_MB=25
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      - acadflow_uploads:/app/uploads
+    networks:
+      - acadflow_network
+
+  mysql:
+    image: mysql:8.0
+    container_name: acadflow_mysql
+    restart: unless-stopped
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: root_secure_password_replace_in_prod
+      MYSQL_DATABASE: acadflow_prod
+      MYSQL_USER: acadflow_user
+      MYSQL_PASSWORD: acadflow_secure_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./prisma/migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "acadflow_user", "-pacadflow_secure_password"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - acadflow_network
+
+volumes:
+  mysql_data:
+    driver: local
+  acadflow_uploads:
+    driver: local
+
+networks:
+  acadflow_network:
+    driver: bridge

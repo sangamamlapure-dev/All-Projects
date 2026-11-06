@@ -1,0 +1,642 @@
+Here is the edited prompt. I removed the technology stack, architecture and folder structure, Windows setup and tool-specific instructions. Every feature, role, workflow, entity, dashboard and the 25-feature requirement are kept, but written without naming any language, framework or database.
+
+---
+
+# ACADFLOW: MASTER REQUIREMENTS PROMPT
+## Academic Project Management and Evaluation System
+
+### 1. PROJECT MISSION
+
+Build **AcadFlow, an Academic Project Management and Evaluation System**, as a real, functional, secure, full-stack application for engineering colleges, academic departments, project mentors, students and external evaluators.
+
+The application must provide persistent data storage, secure authentication, exactly four application roles, complete academic project lifecycle workflows, department administration, private document management, notifications, reports, analytics, audit logs, automated tests and deployment documentation.
+
+This is not a static UI prototype, a set of disconnected CRUD pages, a mock dashboard or a fake API.
+
+Prioritize correctness, security, data integrity, maintainability and verified functionality over appearance or speed.
+
+**Technology choice:** No specific language, framework, database or tool is mandated. Before implementation, propose a suitable, maintained, production-ready technology stack and get approval. The chosen stack must support every requirement below.
+
+### 2. AUTHORITATIVE REQUIREMENTS AND ORIGINAL FEATURE PRESERVATION
+
+The original AcadFlow Mega Prompt and its supplemental specifications are authoritative for all original business requirements.
+
+Preserve every original requirement, including:
+
+- All original academic workflows and business rules.
+- All original data entities.
+- All 25 original additional feature areas.
+- All required reports, notifications, collaboration and analytics.
+- Security, validation and authorization requirements.
+- Testing and documentation requirements.
+- Original development phases and intent.
+- Required user journeys and acceptance criteria.
+
+The only intentional structural change is the four-role model in Section 3. Replace the old five-role model consistently without removing any underlying business functionality.
+
+**Do not invent missing original requirements.**
+
+Before implementation:
+
+1. Inspect all available project files and specifications.
+2. Search for the original Mega Prompt and its exact 25-feature list.
+3. Create `REQUIREMENT_TRACEABILITY.md`.
+4. Record each original requirement with its exact name, source, UI, backend and data dependencies, permissions, acceptance tests and implementation status.
+5. If the original specifications or feature list cannot be found, record the missing material as `BLOCKED` and request it. Do not claim all original requirements have been inventoried or implemented.
+6. Treat the additional features listed in this prompt as supplementary requirements.
+
+### 3. FINAL ROLE MODEL: EXACTLY FOUR APPLICATION ROLES
+
+1. `HOD`
+2. `STUDENT`
+3. `PROJECT_MENTOR`
+4. `EXTERNAL_EVALUATOR`
+
+**HOD is the Department Administrator and owns the Admin Panel.**
+
+Do not create or retain:
+
+- `SYSTEM_ADMIN` or `SUPER_ADMIN`
+- `DEPARTMENT_ADMIN` as a separate role
+- Any fifth application role
+- Any hidden superuser role or undocumented privilege bypass
+
+Technical service identities, if genuinely necessary, must not become interactive application roles or bypass the security model.
+
+Update every role reference consistently across the data model, authentication and authorization, registration and invitations, backend logic, frontend routes and dashboards, seed data, documentation, permission matrices, traceability and all tests.
+
+Search the entire codebase and specifications for the previous System Administrator role. Preserve global application requirements through deployment configuration, operational tooling and authorized infrastructure processes, not through a fifth role.
+
+#### 3.1 HOD: Department Administrator
+
+HOD has administrative authority over their explicitly authorized department.
+
+The HOD can:
+
+- Manage department students, faculty, mentors and permitted user accounts.
+- Create invitations and activate, deactivate, suspend or reactivate accounts with security safeguards.
+- Manage department teams, memberships and project records.
+- Review proposals and approve, reject or request corrections.
+- Allocate mentors and monitor mentor workload.
+- Assign external evaluators to eligible department projects.
+- Manage milestones, tasks, review schedules and deadlines.
+- Configure authorized department academic settings within applicable policies.
+- Configure evaluation rubrics and weights within permitted limits.
+- Monitor submissions, reviews, corrections and evaluations.
+- Moderate evaluations when the configured workflow allows.
+- Authorize and publish results.
+- Manage department announcements, notifications and calendars.
+- View department analytics and generate PDF, Excel and authorized CSV reports.
+- Review department audit history.
+- Manage academic-year rollover, project closure and archival.
+- Review authorized backup status, integration health and operational information through a safe, read-only interface.
+
+HOD must not need a separate administrator account.
+
+HOD must not access database credentials, application secrets, unrestricted infrastructure controls or another department's private records.
+
+#### 3.2 Student
+
+Students can:
+
+- View and manage their authorized team memberships.
+- Create, revise and submit project proposals.
+- View proposal status and approval feedback.
+- Access their assigned project information.
+- Manage permitted tasks, milestones and progress updates.
+- Upload documents, reports, presentations and evidence.
+- View submission and document revision history.
+- Participate in project discussions and collaboration.
+- Track feedback and submit corrections.
+- View review schedules, deadlines and notifications.
+- View evaluation results only when publication and authorization rules permit.
+- Export permitted project portfolios and summaries.
+
+Students must not approve their own proposals, assign themselves official mentors or evaluators, change official marks or publish results.
+
+#### 3.3 Project Mentor
+
+Project mentors can:
+
+- View projects explicitly assigned to them.
+- Monitor assigned teams and project progress.
+- Review proposals and submissions where authorized.
+- Create and update feedback, tasks and milestone reviews.
+- Schedule or participate in project reviews according to permissions.
+- Request corrections and verify corrected submissions.
+- Record progress observations and meeting outcomes.
+- Monitor overdue tasks and milestones.
+- View authorized project documents and activity history.
+
+Mentors must not access unassigned projects or modify finalized evaluations and published results outside an explicitly authorized workflow.
+
+#### 3.4 External Evaluator
+
+External evaluators can:
+
+- View projects explicitly assigned to them for evaluation.
+- Access only the submissions and documents permitted for those assignments.
+- Review evaluation rubrics and criteria.
+- Save evaluation drafts.
+- Enter scores and comments within configured limits.
+- Provide required comments for designated outcomes.
+- Submit and finalize evaluations according to workflow rules.
+- Declare conflicts of interest.
+- View their own evaluation status and history.
+
+External evaluators must not browse unrelated student records, access unassigned projects, change published results or edit finalized evaluations without a specific authorized correction workflow.
+
+### 4. AUTHORIZATION AND SECURITY BOUNDARIES
+
+Enforce permissions on the backend for every protected operation.
+
+- Never trust client-supplied roles or permission claims.
+- Never trust client-supplied department IDs, ownership, project assignments, evaluator IDs or approval states.
+- Resolve identity from the authenticated server-side session.
+- Scope HOD operations to the HOD's authorized department.
+- Scope mentor operations to explicitly assigned projects.
+- Scope student operations to valid memberships and permitted resources.
+- Scope evaluator operations to explicit assignments and allowed evaluation states.
+- Enforce object-level authorization on reads, updates, deletes, uploads, downloads and exports.
+- Prevent IDOR, cross-department access and privilege escalation.
+- Record sensitive administrative actions in audit logs.
+- Reject invalid workflow transitions on the server.
+- Use transactions for related multi-step operations.
+- Apply least privilege to every route and service.
+
+Create a complete `PERMISSIONS_MATRIX.md` mapping all four roles to every major operation.
+
+Test both allowed and denied access. Hiding a button in the UI is never a substitute for backend authorization.
+
+### 5. QUALITY AND TECHNICAL REQUIREMENTS
+
+The chosen stack must support:
+
+- A responsive web frontend with accessible, reusable components and a consistent design system.
+- A real backend API with centralized error handling, server-side validation and structured, redacted logging.
+- A relational database with explicit relationships, indexes, constraints, migrations and separate development and test environments.
+- Secure server-side sessions with a production-suitable session store.
+- Strong password hashing, protected cookies, CSRF protection, secure HTTP headers, rate limiting and a safe CORS policy.
+- Private file storage, with optional private object storage for production.
+- PDF and Excel report generation.
+- Automated unit, integration and end-to-end testing.
+- Linting, formatting and version control.
+
+The frontend must call the real backend API. Do not simulate server functionality with frontend-only code, fake data, browser storage or hardcoded dashboard statistics.
+
+### 6. COMPLETE ACADEMIC PROJECT LIFECYCLE
+
+Implement and validate the following lifecycle:
+
+1. Authorized account invitation or creation.
+2. Secure login, logout and account recovery.
+3. Department, academic-year and semester configuration.
+4. Student team creation and membership management.
+5. Project proposal creation, editing and submission.
+6. Server-side proposal validation and duplicate-project warnings.
+7. Mentor allocation by the HOD.
+8. HOD proposal approval, rejection or correction request.
+9. Milestone planning and task assignment.
+10. Progress updates and evidence attachments.
+11. Private document uploads and revision history.
+12. Review scheduling and calendar events.
+13. Mentor reviews and structured feedback.
+14. Correction submission and re-review.
+15. Final report and presentation submission.
+16. External evaluator assignment.
+17. Rubric-based evaluation.
+18. Server-side score validation and calculation.
+19. Authorized moderation or re-evaluation when configured.
+20. Result approval and publication.
+21. Student access to published results.
+22. PDF and Excel report generation.
+23. Audit logging and project archival.
+
+Implement explicit workflow states and valid transitions. Prevent unauthorized skipping of approval, evaluation and publication stages. Use transactions wherever related operations must succeed or fail together.
+
+### 7. DATA REQUIREMENTS
+
+Preserve all entities from the original specifications. The data model must include the following groups, plus any original required entities.
+
+**Identity and configuration:** User, Role (four-role model), Permission (if justified), UserSession, Invitation, Department, AcademicYear, Semester, SystemSetting, StudentProfile, FacultyProfile, ExternalEvaluatorProfile.
+
+**Teams and projects:** Team, TeamMembership, TeamInvitation, Project, ProjectProposal, ProposalRevision, MentorAssignment, Milestone, Task, TaskComment, ProgressUpdate.
+
+**Documents and submissions:** Document, DocumentVersion, Submission.
+
+**Reviews and evaluations:** Review, ReviewSchedule, ReviewAttendance, Feedback, Evaluation, EvaluationRubric, RubricCriterion, EvaluationScore, Result, ResultVersion (or equivalent history).
+
+**Communication and collaboration:** Notification, Announcement, CalendarEvent, Reminder, DiscussionThread, DiscussionPost, ProjectComment, Mention, MeetingNote, ActionItem.
+
+**Governance and supporting features:** AuditLog, ActivityLog, SavedFilter, UserPreference, DashboardPreference, IntegrationConfiguration, ExportJob, BackupRecord, AIRequestLog (when AI features are configured), and any additional entities required by the original specifications.
+
+Data integrity requirements:
+
+- Primary and foreign keys with correct relationships.
+- Unique constraints and appropriate indexes.
+- Timestamps and lifecycle history.
+- Suitable decimal precision for marks and rubric weights.
+- Referential integrity and explicit deletion and retention policies.
+- Check constraints where supported.
+- Transactions for related operations.
+- UTC storage with explicit time-zone conversion for display.
+- Safe, versioned migrations.
+- Never automatically drop, reset or recreate a production database.
+- Never run automated tests against production data.
+
+### 8. AUTHENTICATION AND ACCOUNT MANAGEMENT
+
+Implement:
+
+- Login and logout.
+- Secure server-side sessions with expiry and invalidation.
+- Strong password hashing (never plaintext).
+- Rate-limited authentication endpoints.
+- Password-reset tokens with expiry and one-time use.
+- Invitation acceptance with secure token handling.
+- Email verification when configured.
+- Account suspension, deactivation and reactivation with audit trails.
+- Safe session invalidation after relevant account-security changes.
+- Server-side role and resource checks.
+
+Do not use an in-memory session store in production.
+
+There is no open public self-registration for privileged accounts. HOD accounts must be provisioned through a controlled bootstrap or authorized invitation process. Student and mentor account creation must follow department policy.
+
+If email is not configured, show a clear not-configured state and provide a safe development-only recovery method that never exposes reset tokens in production logs or public responses.
+
+### 9. PRIVATE FILE MANAGEMENT
+
+Implement real document uploads and downloads for configured formats (PDF, DOCX, PPTX, XLSX, ZIP and approved images).
+
+- Configurable file-size limits.
+- Extension, MIME and file-signature validation where applicable.
+- Randomized storage keys.
+- Private storage outside any public directory.
+- Metadata and uploader identity in the database.
+- Document revision history.
+- Project association and submission timestamps.
+- Authorization on every upload, view and download.
+- Safe retention and deletion rules.
+- Upload error handling and cleanup of incomplete operations.
+- Protection against path traversal and malicious filenames.
+- Safe file streaming with appropriate response headers.
+
+Never expose private documents through predictable public URLs. Do not claim antivirus scanning unless a real scanner is integrated and enabled.
+
+### 10. NOTIFICATIONS, ANNOUNCEMENTS AND CALENDAR
+
+Implement:
+
+- In-app notifications.
+- Targeted announcements.
+- Proposal status notifications.
+- Mentor and evaluator assignment notifications.
+- Feedback and correction notifications.
+- Deadline and review reminders.
+- Read/unread status.
+- Notification history and preferences.
+- Calendar events with time-zone-aware display.
+- Background-job retry handling where configured.
+
+Email must use a real configured provider. If credentials are unavailable, the rest of the application must keep working and the UI must clearly show that email delivery is not configured.
+
+### 11. REPORTING AND ANALYTICS
+
+Provide database-backed, permission-scoped reports for:
+
+- Students and teams.
+- Project progress.
+- Mentor workload.
+- Proposal approvals and pending corrections.
+- Milestone completion.
+- Pending and completed submissions.
+- Review history.
+- Evaluation summaries.
+- Published results.
+- Department analytics.
+- Academic-year comparisons where data permits.
+- Authorized audit events.
+
+Support PDF and Excel exports, plus CSV import/export where appropriate. Implement server-side filtering, sorting and pagination. Use actual stored data for all charts and summaries. Never fabricate statistics or return hardcoded demonstration numbers as live data.
+
+### 12. PRESERVE ALL 25 ORIGINAL ADDITIONAL FEATURE AREAS
+
+Implement all 25 additional feature areas from the original AcadFlow Mega Prompt.
+
+Before implementation:
+
+- Retrieve and inventory the exact original feature names.
+- Map each feature to relevant roles and workflows.
+- Identify its frontend, backend and data dependencies.
+- Define authorization, validation and acceptance tests.
+- Track dependencies and implementation status.
+
+If the original list is unavailable, mark the inventory `BLOCKED` and request the original specifications. Do not invent the missing feature names.
+
+A feature is not implemented merely because it has a navigation link, empty page, placeholder button or static dashboard.
+
+### 13. ADDITIONAL REAL-WORLD FEATURES
+
+Implement these supplementary features while preserving all original functionality.
+
+**Academic operations**
+- Academic-year and semester management.
+- Configurable proposal submission windows.
+- Configurable review stages.
+- Evaluation rubric and weight configuration.
+- Deadline management.
+- Team membership history.
+- Mentor conflict-of-interest declarations.
+- Mentor workload balancing suggestions.
+- Duplicate proposal similarity warnings.
+- Project status history.
+- Formal project closure and archival.
+
+**Student productivity**
+- Project progress timeline.
+- Personal task board.
+- Milestone calendar.
+- Submission checklist.
+- Feedback resolution tracker.
+- Team contribution records.
+- Skills and technology tags.
+- Portfolio export.
+- Resume-ready project summaries.
+- Git repository URL association.
+- Optional GitHub repository metadata integration.
+
+**Collaboration**
+- Project discussion threads.
+- Comments and replies.
+- Mentions and notifications.
+- Document revision history.
+- Activity timeline.
+- Meeting notes.
+- Decisions and action items.
+- Team change history.
+
+**Evaluation integrity**
+- Configurable rubric weights.
+- Score range validation.
+- Required comments for selected evaluation outcomes.
+- Draft, submitted and finalized states.
+- Evaluator conflict declarations.
+- Optional double evaluation.
+- Score discrepancy detection.
+- Authorized moderation.
+- Result version history.
+- Audited finalized-score corrections.
+
+**Administration and governance**
+- User invitation workflow.
+- Account suspension and reactivation.
+- Academic-year rollover tools.
+- CSV imports with validation and preview.
+- Duplicate detection.
+- Exportable audit events.
+- Backup status monitoring.
+- Configuration history.
+- Integration health checks.
+- Retention and archival settings.
+
+**User experience**
+- Responsive mobile, tablet and desktop layouts.
+- Search, filters, sorting and pagination.
+- Saved filters.
+- Accessible forms.
+- Clear loading, success, error and empty states.
+- Keyboard-friendly navigation.
+- Optional dark mode.
+- Notification preferences.
+- Consistent design system.
+
+**Optional intelligent assistance**
+- Proposal completeness checker.
+- Suggested milestone templates.
+- Project summary drafting.
+- Feedback summarization.
+- Transparent rule-based risk indicators.
+- Deadline-risk alerts.
+- AI-assisted documentation drafting.
+
+AI features must be optional and use a real configured provider. Never fabricate AI results, expose unauthorized student documents to an AI provider, or let AI independently approve projects, assign official grades or publish results.
+
+### 14. FOUR ROLE-SPECIFIC DASHBOARDS
+
+**HOD: Department Admin Panel**
+- Department overview.
+- Department users and faculty.
+- Team and project management.
+- Proposal approvals.
+- Mentor allocation and workload.
+- External evaluator assignments.
+- Pending reviews and submissions.
+- Evaluation moderation and result publication.
+- Academic settings and deadlines.
+- Department analytics and reports.
+- Announcements and notifications.
+- Department audit history.
+
+**Student Dashboard**
+- Team and project status.
+- Proposal approval status.
+- Tasks and milestones.
+- Upcoming deadlines.
+- Feedback and correction requests.
+- Document and submission history.
+- Notifications.
+- Published results and portfolio tools.
+
+**Project Mentor Dashboard**
+- Assigned projects.
+- Pending reviews.
+- Upcoming reviews.
+- Overdue milestones.
+- Student feedback and corrections.
+- Team progress.
+- Relevant notifications.
+
+**External Evaluator Dashboard**
+- Assigned evaluations.
+- Authorized submissions.
+- Rubrics and scoring.
+- Draft evaluations.
+- Evaluation deadlines.
+- Finalization status.
+
+All dashboards must show actual stored data, use authorized API endpoints and provide accurate empty states.
+
+### 15. SECURITY AND DATA INTEGRITY
+
+Implement:
+
+- Secure HTTP headers.
+- Secure session cookies.
+- CSRF protection for cookie-authenticated mutations.
+- Authentication and API rate limiting.
+- Server-side input validation.
+- Protection against injection (parameterized data access).
+- Safe output rendering.
+- Strict CORS policy.
+- Environment-based secrets.
+- Redacted logs.
+- Upload and request limits.
+- Resource-level authorization.
+- Department and project isolation.
+- Audit logging for sensitive operations.
+- Safe transaction handling.
+- Explicit workflow transition validation.
+
+Never store plaintext passwords or log credentials, reset tokens or session cookies.
+
+Never trust client-supplied marks, assignments, ownership, permissions, department IDs or approval states.
+
+Prevent modification of finalized evaluations and published results except through a specific, authorized, validated and audited correction workflow.
+
+Use production-safe error responses that never expose stack traces, query details or secrets.
+
+### 16. TESTING AND ACCEPTANCE
+
+Write automated tests (unit, integration and end-to-end) for:
+
+- Login, logout and session expiry.
+- Password hashing and reset-token security.
+- All four application roles.
+- Allowed and denied permissions.
+- HOD department isolation.
+- Mentor project isolation.
+- Student membership and ownership restrictions.
+- External evaluator assignment restrictions.
+- Unauthorized cross-department access.
+- Proposal submission and approval.
+- Mentor allocation.
+- Tasks and milestones.
+- Document upload and download authorization.
+- Document revision history.
+- Evaluation scoring and finalization.
+- Result publication permissions.
+- Unauthorized changes to finalized evaluations and published results.
+- Notifications.
+- PDF and Excel exports.
+- Search, filtering and pagination.
+- Validation and centralized error handling.
+- Audit logging.
+- Critical end-to-end user journeys.
+
+Use a dedicated test database, isolated fixtures and safe test data. Never test against production data.
+
+Run tests in the actual available environment where possible. Record real commands, results and failures. Never mark a test as passed unless it was executed and passed.
+
+### 17. ENVIRONMENT
+
+Before setup, inspect the available runtime, package manager, version control, database availability, current directory, existing project files and execution capabilities. Do not assume any tool is installed.
+
+Provide setup instructions for the user's operating system. Create a safe `.env.example` with placeholders only.
+
+Do not request, display or commit real passwords, API keys, production credentials or private tokens.
+
+Preserve existing files. Inspect before modifying. Never overwrite or delete existing user work silently.
+
+### 18. REQUIRED DOCUMENTATION
+
+Maintain:
+
+- `README.md`
+- `DEVELOPMENT_PLAN.md`
+- `FEATURE_STATUS.md`
+- `DEVELOPMENT_LOG.md`
+- `ARCHITECTURE.md`
+- `DATABASE_SCHEMA.md`
+- `PERMISSIONS_MATRIX.md`
+- `SECURITY.md`
+- `DEPLOYMENT.md`
+- `REQUIREMENT_TRACEABILITY.md`
+- `.env.example`
+- `.gitignore`
+
+`FEATURE_STATUS.md` must include feature name, implementation status, relevant files, data dependencies, test status and evidence, and outstanding issues.
+
+Use only these status values: `PLANNED`, `IN_PROGRESS`, `IMPLEMENTED_NOT_TESTED`, `TESTED`, `BLOCKED`.
+
+Never mark a feature `TESTED` without actual evidence. Never commit `.env`, credentials, private uploads or production data. Keep documentation, seed data and tests consistent with exactly the four approved roles.
+
+### 19. SEQUENTIAL DEVELOPMENT PHASES
+
+Work on one phase at a time.
+
+- **Phase 1, Foundation:** Inspect the environment and files, locate the original specifications, create the traceability document, propose and confirm the technology stack, set up a minimal frontend and backend, add a real health endpoint, centralized error handling, an initial test, a safe environment example, `.gitignore` and setup instructions. Record actual verification results. Do not begin the database, authentication or workflows until Phase 1 is verified.
+- **Phase 2, Data layer:** Set up the database, define the schema with all four roles, add migrations, verify connectivity, separate development and test databases, safe seed data, and test constraints and relationships.
+- **Phase 3, Authentication and authorization:** Login, logout, sessions, invitations, account recovery, the four roles, department and resource-level authorization, and tests of permitted and denied operations.
+- **Phase 4, Shared UI and dashboards:** Reusable components and layouts, all four dashboards connected to real APIs, route protection and clear error states.
+- **Phase 5, Core academic workflows:** Departments and user management, teams and proposals, HOD approvals, mentor allocation, tasks and milestones, documents and reviews, evaluator assignments, evaluations and results.
+- **Phase 6, Shared modules:** Notifications and calendar, feedback and corrections, audit logs, search and pagination, PDF and Excel reports.
+- **Phase 7, Original and supplementary features:** All 25 original feature areas and the approved supplementary enhancements, updating the traceability matrix after each feature.
+- **Phase 8, Testing and security:** Run automated tests, test all four roles and isolation boundaries, file security and evaluation workflows, fix regressions, and verify the production build and security configuration.
+- **Phase 9, Deployment:** Production configuration, database setup, build and deploy, persistent private storage, HTTPS and cookie settings, safe migrations, verification of real deployment workflows, and documented backup, restore and rollback procedures.
+
+### 20. STRICT WORKFLOW FOR EVERY PHASE
+
+1. State the objective.
+2. Inspect relevant existing files.
+3. List the exact files to create or modify.
+4. Briefly explain important decisions.
+5. Generate complete, coherent code for the current phase.
+6. Provide exact commands for the user's operating system.
+7. Run available checks.
+8. Report actual output, failures and limitations.
+9. Update `FEATURE_STATUS.md`, `DEVELOPMENT_LOG.md` and `REQUIREMENT_TRACEABILITY.md`.
+10. Stop at the verification checkpoint when external execution is required.
+
+Do not generate hundreds of unverified files in one step. Do not create empty modules to simulate progress. Do not leave important buttons disconnected. Do not hardcode fake API responses or statistics. Do not use browser storage as the authoritative store for users, roles, evaluations or projects. Do not proceed past a failed critical verification without investigating.
+
+If the environment cannot run the backend or connect to the database, generate the source code and precise external verification instructions, and clearly state what has and has not been verified. If an original specification is missing, request it rather than inventing it.
+
+### 21. FIRST ACTION: PHASE 1 ONLY
+
+Start by inspecting the environment, current directory, existing files and original AcadFlow specifications. Then report:
+
+- Detected environment and tool versions.
+- Existing project files.
+- Whether the original Mega Prompt and 25-feature list are available.
+- Any blockers.
+- A proposed technology stack for approval.
+- The exact Phase 1 plan.
+
+Then create only the minimal frontend and backend, a working health endpoint, environment example, initial test, `.gitignore` and setup documentation. Do not start the database, authentication or academic workflows during Phase 1. Provide exact commands to install, start and test, and ask for real output before claiming verification.
+
+### 22. FINAL ACCEPTANCE RULE
+
+AcadFlow is functionally complete only when:
+
+- Frontend and backend work together.
+- Authentication and session management are real.
+- Exactly four application roles exist throughout.
+- HOD can administer their authorized department.
+- Backend authorization enforces all resource boundaries.
+- A real database stores and retrieves application data.
+- Migrations work safely.
+- Core academic workflows complete end to end.
+- Private documents are access-controlled.
+- Evaluations and results follow authorized workflows.
+- Reports use actual stored data.
+- Critical automated tests pass in the intended environment.
+- Every original requirement and all 25 original feature areas have traceable statuses.
+- Setup, deployment, security and limitations are documented.
+
+**FINAL DIRECTIVE**
+
+Build AcadFlow as a real, secure, maintainable full-stack application. Keep exactly four application roles: `HOD`, `STUDENT`, `PROJECT_MENTOR` and `EXTERNAL_EVALUATOR`. HOD is the Department Administrator and owns the Admin Panel; do not create a System Administrator or any fifth role. Preserve all original functionality, workflows, entities, all 25 original feature areas and the approved supplementary enhancements. Work phase by phase, inspect before modifying, implement before claiming completion, and verify before marking anything tested.
+
+**Begin with Phase 1 only.**
+
+---
+
+**What changed:**
+- Removed the "Mandatory Technology Stack" section and the monorepo folder structure.
+- Removed the Windows/PowerShell path and tool-specific wording (React, Express, MySQL, Prisma, Argon2, PDFKit, ExcelJS, Vitest, Playwright and similar).
+- Replaced them with a short "Quality and Technical Requirements" section that states what the system must do, not which tools to use.
+- Added a step in Phase 1 to propose a stack for approval.
+- All features, roles, entities, dashboards, workflows, security rules and the 25-feature requirement remain.
+
+If you want to name a specific stack later, a one-line instruction in Section 1 is enough.

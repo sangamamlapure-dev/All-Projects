@@ -1,0 +1,11 @@
+{
+  "routes": [
+    { "path": "/", "title": "NeuroForge AI" },
+    { "path": "/dashboard", "title": "Dashboard" },
+    { "path": "/research/new", "title": "New Research" },
+    { "path": "/research/:researchId", "title": "Research Details" },
+    { "path": "/agents", "title": "AI Agents" },
+    { "path": "/reports", "title": "Reports" },
+    { "path": "/reports/:reportId", "title": "Report Details" }
+  ]
+}

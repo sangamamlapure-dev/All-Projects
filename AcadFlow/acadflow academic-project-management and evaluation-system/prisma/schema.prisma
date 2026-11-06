@@ -1,0 +1,1017 @@
+// AcadFlow — Production Academic Project Management & Evaluation System
+// Prisma Schema Definition with MySQL 8
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// -------------------------------------------------------------
+// ENUMS (Strict 4-Role Model & Lifecycle States)
+// -------------------------------------------------------------
+
+enum Role {
+  HOD
+  STUDENT
+  PROJECT_MENTOR
+  EXTERNAL_EVALUATOR
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  INACTIVE
+}
+
+enum TeamRole {
+  LEADER
+  MEMBER
+}
+
+enum ProjectStatus {
+  PROPOSED
+  APPROVED
+  IN_PROGRESS
+  REVIEWED
+  EVALUATED
+  COMPLETED
+  ARCHIVED
+}
+
+enum ProposalStatus {
+  DRAFT
+  SUBMITTED
+  REVISION_REQUESTED
+  APPROVED
+  REJECTED
+}
+
+enum MilestoneStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  OVERDUE
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum DocumentCategory {
+  PROPOSAL
+  REPORT
+  PRESENTATION
+  EVIDENCE
+  SOURCE_CODE
+  MINUTES
+  OTHER
+}
+
+enum ReviewStage {
+  INCEPTION
+  MIDTERM
+  FINAL
+  CORRECTION
+}
+
+enum EvaluationStatus {
+  DRAFT
+  SUBMITTED
+  FINALIZED
+}
+
+enum NotificationType {
+  INFO
+  DEADLINE
+  FEEDBACK
+  APPROVAL
+  ALERT
+}
+
+// -------------------------------------------------------------
+// IDENTITY & CONFIGURATION
+// -------------------------------------------------------------
+
+model Department {
+  id               String            @id @default(uuid())
+  code             String            @unique
+  name             String
+  description      String?           @db.Text
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  users            User[]
+  academicYears    AcademicYear[]
+  teams            Team[]
+  projects         Project[]
+  rubrics          EvaluationRubric[]
+  announcements    Announcement[]
+  auditLogs        AuditLog[]
+
+  @@map("departments")
+}
+
+model User {
+  id               String            @id @default(uuid())
+  email            String            @unique
+  passwordHash     String
+  name             String
+  role             Role
+  status           UserStatus        @default(ACTIVE)
+  departmentId     String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  department       Department?       @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  studentProfile   StudentProfile?
+  facultyProfile   FacultyProfile?
+  evaluatorProfile ExternalEvaluatorProfile?
+
+  sessions         UserSession[]
+  invitationsSent  Invitation[]      @relation("SentInvitations")
+  createdTeams     Team[]            @relation("TeamCreator")
+  teamMemberships  TeamMembership[]
+  mentorAssignments MentorAssignment[] @relation("MentorUser")
+  assignedTasks    Task[]            @relation("TaskAssignee")
+  taskComments     TaskComment[]     @relation("TaskCommentAuthor")
+  progressUpdates  ProgressUpdate[]  @relation("ProgressAuthor")
+  documentVersions DocumentVersion[] @relation("DocumentUploader")
+  submissions      Submission[]      @relation("SubmittingUser")
+  evaluations      Evaluation[]      @relation("EvaluatorUser")
+  feedbackGiven    Feedback[]        @relation("FeedbackAuthor")
+  announcements    Announcement[]    @relation("AnnouncementAuthor")
+  notifications    Notification[]    @relation("UserNotifications")
+  discussionPosts  DiscussionPost[]  @relation("PostAuthor")
+  projectComments  ProjectComment[]  @relation("CommentAuthor")
+  meetingNotes     MeetingNote[]     @relation("NoteAuthor")
+  auditLogs        AuditLog[]        @relation("ActorAuditLogs")
+  userPreferences  UserPreference?
+  dashboardPref    DashboardPreference?
+
+  @@index([departmentId])
+  @@index([role])
+  @@index([status])
+  @@map("users")
+}
+
+model Permission {
+  id          String   @id @default(uuid())
+  role        Role
+  resource    String
+  action      String   // CREATE, READ, UPDATE, DELETE, MODERATE, PUBLISH
+  description String?
+  createdAt   DateTime @default(now())
+
+  @@unique([role, resource, action])
+  @@map("permissions")
+}
+
+model UserSession {
+  id          String   @id @default(uuid())
+  userId      String
+  token       String   @unique
+  expiresAt   DateTime
+  ipAddress   String?
+  userAgent   String?  @db.Text
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@map("user_sessions")
+}
+
+model Invitation {
+  id           String     @id @default(uuid())
+  email        String
+  role         Role
+  departmentId String
+  token        String     @unique
+  invitedById  String
+  expiresAt    DateTime
+  acceptedAt   DateTime?
+  createdAt    DateTime   @default(now())
+
+  invitedBy    User       @relation("SentInvitations", fields: [invitedById], references: [id], onDelete: Cascade)
+
+  @@index([email])
+  @@index([token])
+  @@map("invitations")
+}
+
+model AcademicYear {
+  id           String     @id @default(uuid())
+  departmentId String
+  yearName     String     // e.g. "2026-2027"
+  isCurrent    Boolean    @default(false)
+  startDate    DateTime
+  endDate      DateTime
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  department   Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  semesters    Semester[]
+  teams        Team[]
+  rubrics      EvaluationRubric[]
+
+  @@unique([departmentId, yearName])
+  @@index([departmentId])
+  @@map("academic_years")
+}
+
+model Semester {
+  id             String       @id @default(uuid())
+  academicYearId String
+  termNumber     Int          // e.g. 7, 8
+  isActive       Boolean      @default(true)
+  startDate      DateTime
+  endDate        DateTime
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+
+  @@index([academicYearId])
+  @@map("semesters")
+}
+
+model SystemSetting {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  value       String   @db.Text
+  category    String   // ACADEMIC, SECURITY, STORAGE, NOTIFICATION
+  description String?
+  updatedAt   DateTime @updatedAt
+
+  @@map("system_settings")
+}
+
+model StudentProfile {
+  id               String   @id @default(uuid())
+  userId           String   @unique
+  enrollmentNumber String   @unique
+  batch            String
+  cgpa             Decimal? @db.Decimal(4, 2)
+  skills           String?  @db.Text
+  gitHubUrl        String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("student_profiles")
+}
+
+model FacultyProfile {
+  id               String   @id @default(uuid())
+  userId           String   @unique
+  designation      String
+  specialization   String
+  maxMenteeQuota   Int      @default(5)
+  officeHours      String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("faculty_profiles")
+}
+
+model ExternalEvaluatorProfile {
+  id               String   @id @default(uuid())
+  userId           String   @unique
+  institution      String
+  qualification    String
+  designation      String
+  conflictDeclared Boolean  @default(false)
+  conflictNotes    String?  @db.Text
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("external_evaluator_profiles")
+}
+
+// -------------------------------------------------------------
+// TEAMS & PROJECTS
+// -------------------------------------------------------------
+
+model Team {
+  id             String           @id @default(uuid())
+  name           String
+  departmentId   String
+  academicYearId String
+  createdById    String
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  department     Department       @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  academicYear   AcademicYear     @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  createdBy      User             @relation("TeamCreator", fields: [createdById], references: [id], onDelete: Cascade)
+
+  memberships    TeamMembership[]
+  invitations    TeamInvitation[]
+  project        Project?
+
+  @@index([departmentId])
+  @@index([academicYearId])
+  @@map("teams")
+}
+
+model TeamMembership {
+  id        String   @id @default(uuid())
+  teamId    String
+  studentId String
+  role      TeamRole @default(MEMBER)
+  joinedAt  DateTime @default(now())
+
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  student   User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, studentId])
+  @@index([studentId])
+  @@map("team_memberships")
+}
+
+model TeamInvitation {
+  id        String   @id @default(uuid())
+  teamId    String
+  email     String
+  status    String   @default("PENDING") // PENDING, ACCEPTED, DECLINED
+  createdAt DateTime @default(now())
+
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@index([teamId])
+  @@index([email])
+  @@map("team_invitations")
+}
+
+model Project {
+  id               String             @id @default(uuid())
+  teamId           String             @unique
+  departmentId     String
+  title            String
+  description      String?            @db.Text
+  status           ProjectStatus      @default(PROPOSED)
+  repositoryUrl    String?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  team             Team               @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  department       Department         @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+
+  proposals        ProjectProposal[]
+  mentorAssignments MentorAssignment[]
+  milestones       Milestone[]
+  progressUpdates  ProgressUpdate[]
+  documents        Document[]
+  submissions      Submission[]
+  reviews          Review[]
+  reviewSchedules  ReviewSchedule[]
+  evaluations      Evaluation[]
+  result           Result?
+  discussionThreads DiscussionThread[]
+  projectComments  ProjectComment[]
+  meetingNotes     MeetingNote[]
+  actionItems      ActionItem[]
+
+  @@index([departmentId])
+  @@index([status])
+  @@map("projects")
+}
+
+model ProjectProposal {
+  id             String             @id @default(uuid())
+  projectId      String
+  title          String
+  abstract       String             @db.Text
+  objectives     String             @db.Text
+  techStack      String
+  status         ProposalStatus     @default(DRAFT)
+  submissionDate DateTime?
+  approvedAt     DateTime?
+  rejectionReason String?           @db.Text
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  project        Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  revisions      ProposalRevision[]
+
+  @@index([projectId])
+  @@index([status])
+  @@map("project_proposals")
+}
+
+model ProposalRevision {
+  id            String          @id @default(uuid())
+  proposalId    String
+  versionNumber Int
+  changeSummary String          @db.Text
+  feedbackNotes String?         @db.Text
+  createdAt     DateTime        @default(now())
+
+  proposal      ProjectProposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+
+  @@unique([proposalId, versionNumber])
+  @@index([proposalId])
+  @@map("proposal_revisions")
+}
+
+model MentorAssignment {
+  id         String   @id @default(uuid())
+  projectId  String
+  mentorId   String
+  isPrimary  Boolean  @default(true)
+  assignedAt DateTime @default(now())
+
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  mentor     User     @relation("MentorUser", fields: [mentorId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, mentorId])
+  @@index([mentorId])
+  @@map("mentor_assignments")
+}
+
+model Milestone {
+  id          String          @id @default(uuid())
+  projectId   String
+  title       String
+  description String?         @db.Text
+  dueDate     DateTime
+  status      MilestoneStatus @default(PENDING)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  project     Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tasks       Task[]
+
+  @@index([projectId])
+  @@index([status])
+  @@map("milestones")
+}
+
+model Task {
+  id          String        @id @default(uuid())
+  milestoneId String
+  assignedToId String?
+  title       String
+  description String?       @db.Text
+  priority    Priority      @default(MEDIUM)
+  status      TaskStatus    @default(TODO)
+  dueDate     DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  milestone   Milestone     @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+  assignedTo  User?         @relation("TaskAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+  comments    TaskComment[]
+
+  @@index([milestoneId])
+  @@index([assignedToId])
+  @@map("tasks")
+}
+
+model TaskComment {
+  id        String   @id @default(uuid())
+  taskId    String
+  authorId  String
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  author    User     @relation("TaskCommentAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@map("task_comments")
+}
+
+model ProgressUpdate {
+  id          String   @id @default(uuid())
+  projectId   String
+  studentId   String
+  summary     String   @db.Text
+  blockers    String?  @db.Text
+  hoursLogged Decimal? @db.Decimal(5, 1)
+  createdAt   DateTime @default(now())
+
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  student     User     @relation("ProgressAuthor", fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([studentId])
+  @@map("progress_updates")
+}
+
+// -------------------------------------------------------------
+// DOCUMENTS & SUBMISSIONS
+// -------------------------------------------------------------
+
+model Document {
+  id          String           @id @default(uuid())
+  projectId   String
+  title       String
+  category    DocumentCategory @default(REPORT)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  project     Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  versions    DocumentVersion[]
+
+  @@index([projectId])
+  @@map("documents")
+}
+
+model DocumentVersion {
+  id            String       @id @default(uuid())
+  documentId    String
+  versionNumber Int
+  storageKey    String       @unique
+  fileName      String
+  fileSize      Int
+  mimeType      String
+  uploadedById  String
+  createdAt     DateTime     @default(now())
+
+  document      Document     @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  uploadedBy    User         @relation("DocumentUploader", fields: [uploadedById], references: [id], onDelete: Cascade)
+  submissions   Submission[]
+
+  @@unique([documentId, versionNumber])
+  @@index([documentId])
+  @@map("document_versions")
+}
+
+model Submission {
+  id                String           @id @default(uuid())
+  projectId         String
+  documentVersionId String
+  stage             ReviewStage
+  submittedById     String
+  submittedAt       DateTime         @default(now())
+  remarks           String?          @db.Text
+
+  project           Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  documentVersion   DocumentVersion  @relation(fields: [documentVersionId], references: [id], onDelete: Cascade)
+  submittedBy       User             @relation("SubmittingUser", fields: [submittedById], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([documentVersionId])
+  @@map("submissions")
+}
+
+// -------------------------------------------------------------
+// REVIEWS & EVALUATIONS
+// -------------------------------------------------------------
+
+model ReviewSchedule {
+  id            String             @id @default(uuid())
+  projectId     String
+  stage         ReviewStage
+  scheduledDate DateTime
+  venue         String?
+  status        String             @default("SCHEDULED") // SCHEDULED, COMPLETED, CANCELLED
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  project       Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  attendances   ReviewAttendance[]
+  feedbacks     Feedback[]
+
+  @@index([projectId])
+  @@map("review_schedules")
+}
+
+model Review {
+  id          String      @id @default(uuid())
+  projectId   String
+  stage       ReviewStage
+  conductedAt DateTime    @default(now())
+  notes       String      @db.Text
+
+  project     Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@map("reviews")
+}
+
+model ReviewAttendance {
+  id               String         @id @default(uuid())
+  reviewScheduleId String
+  attendeeName     String
+  role             String
+  isPresent        Boolean        @default(true)
+
+  reviewSchedule   ReviewSchedule @relation(fields: [reviewScheduleId], references: [id], onDelete: Cascade)
+
+  @@index([reviewScheduleId])
+  @@map("review_attendances")
+}
+
+model Feedback {
+  id                  String         @id @default(uuid())
+  reviewScheduleId    String
+  mentorId            String
+  comments            String         @db.Text
+  requiredCorrections String?        @db.Text
+  isResolved          Boolean        @default(false)
+  resolvedAt          DateTime?
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+
+  reviewSchedule      ReviewSchedule @relation(fields: [reviewScheduleId], references: [id], onDelete: Cascade)
+  mentor              User           @relation("FeedbackAuthor", fields: [mentorId], references: [id], onDelete: Cascade)
+
+  @@index([reviewScheduleId])
+  @@index([mentorId])
+  @@map("feedbacks")
+}
+
+model EvaluationRubric {
+  id             String            @id @default(uuid())
+  departmentId   String
+  academicYearId String
+  title          String
+  stage          ReviewStage
+  maxScore       Decimal           @db.Decimal(5, 2)
+  isActive       Boolean           @default(true)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  department     Department        @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  academicYear   AcademicYear      @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  criteria       RubricCriterion[]
+  evaluations    Evaluation[]
+
+  @@index([departmentId])
+  @@index([academicYearId])
+  @@map("evaluation_rubrics")
+}
+
+model RubricCriterion {
+  id               String            @id @default(uuid())
+  rubricId         String
+  criterionName    String
+  description      String?           @db.Text
+  maxMarks         Decimal           @db.Decimal(5, 2)
+  weightPercentage Decimal           @db.Decimal(5, 2)
+
+  rubric           EvaluationRubric  @relation(fields: [rubricId], references: [id], onDelete: Cascade)
+  scores           EvaluationScore[]
+
+  @@index([rubricId])
+  @@map("rubric_criteria")
+}
+
+model Evaluation {
+  id             String            @id @default(uuid())
+  projectId      String
+  rubricId       String
+  evaluatorId    String
+  status         EvaluationStatus  @default(DRAFT)
+  totalScore     Decimal?          @db.Decimal(5, 2)
+  comments       String?           @db.Text
+  conflictNotes  String?           @db.Text
+  createdAt      DateTime          @default(now())
+  finalizedAt    DateTime?
+
+  project        Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  rubric         EvaluationRubric  @relation(fields: [rubricId], references: [id], onDelete: Cascade)
+  evaluator      User              @relation("EvaluatorUser", fields: [evaluatorId], references: [id], onDelete: Cascade)
+  scores         EvaluationScore[]
+
+  @@unique([projectId, evaluatorId, rubricId])
+  @@index([projectId])
+  @@index([evaluatorId])
+  @@map("evaluations")
+}
+
+model EvaluationScore {
+  id            String          @id @default(uuid())
+  evaluationId  String
+  criterionId   String
+  scoreAwarded  Decimal         @db.Decimal(5, 2)
+  notes         String?         @db.Text
+
+  evaluation    Evaluation      @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+  criterion     RubricCriterion @relation(fields: [criterionId], references: [id], onDelete: Cascade)
+
+  @@unique([evaluationId, criterionId])
+  @@index([evaluationId])
+  @@map("evaluation_scores")
+}
+
+model Result {
+  id             String          @id @default(uuid())
+  projectId      String          @unique
+  totalMarks     Decimal         @db.Decimal(5, 2)
+  moderatedMarks Decimal?        @db.Decimal(5, 2)
+  finalGrade     String
+  isPublished    Boolean         @default(false)
+  publishedAt    DateTime?
+  publishedById  String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  project        Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  versions       ResultVersion[]
+
+  @@map("results")
+}
+
+model ResultVersion {
+  id            String   @id @default(uuid())
+  resultId      String
+  versionNumber Int
+  totalMarks    Decimal  @db.Decimal(5, 2)
+  moderatedMarks Decimal? @db.Decimal(5, 2)
+  finalGrade    String
+  reason        String   @db.Text
+  modifiedById  String
+  createdAt     DateTime @default(now())
+
+  result        Result   @relation(fields: [resultId], references: [id], onDelete: Cascade)
+
+  @@index([resultId])
+  @@map("result_versions")
+}
+
+// -------------------------------------------------------------
+// COMMUNICATION & COLLABORATION
+// -------------------------------------------------------------
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  title     String
+  message   String           @db.Text
+  type      NotificationType @default(INFO)
+  isRead    Boolean          @default(false)
+  linkUrl   String?
+  createdAt DateTime         @default(now())
+
+  user      User             @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
+  @@map("notifications")
+}
+
+model Announcement {
+  id           String     @id @default(uuid())
+  departmentId String
+  authorId     String
+  title        String
+  content      String     @db.Text
+  isPinned     Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+
+  department   Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  author       User       @relation("AnnouncementAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([departmentId])
+  @@map("announcements")
+}
+
+model CalendarEvent {
+  id          String   @id @default(uuid())
+  title       String
+  description String?  @db.Text
+  startDate   DateTime
+  endDate     DateTime
+  category    String   // DEADLINE, REVIEW, MEETING, HOLIDAY
+  isGlobal    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@map("calendar_events")
+}
+
+model Reminder {
+  id         String   @id @default(uuid())
+  userId     String
+  title      String
+  dueDate    DateTime
+  isResolved Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@map("reminders")
+}
+
+model DiscussionThread {
+  id        String           @id @default(uuid())
+  projectId String
+  title     String
+  createdAt DateTime         @default(now())
+
+  project   Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  posts     DiscussionPost[]
+
+  @@index([projectId])
+  @@map("discussion_threads")
+}
+
+model DiscussionPost {
+  id        String           @id @default(uuid())
+  threadId  String
+  authorId  String
+  content   String           @db.Text
+  createdAt DateTime         @default(now())
+
+  thread    DiscussionThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  author    User             @relation("PostAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([threadId])
+  @@map("discussion_posts")
+}
+
+model ProjectComment {
+  id        String   @id @default(uuid())
+  projectId String
+  authorId  String
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  author    User     @relation("CommentAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@map("project_comments")
+}
+
+model Mention {
+  id         String   @id @default(uuid())
+  entityType String   // POST, COMMENT, NOTE
+  entityId   String
+  userId     String
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@map("mentions")
+}
+
+model MeetingNote {
+  id          String       @id @default(uuid())
+  projectId   String
+  authorId    String
+  meetingDate DateTime
+  title       String
+  minutes     String       @db.Text
+  createdAt   DateTime     @default(now())
+
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  author      User         @relation("NoteAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  actionItems ActionItem[]
+
+  @@index([projectId])
+  @@map("meeting_notes")
+}
+
+model ActionItem {
+  id            String       @id @default(uuid())
+  projectId     String
+  meetingNoteId String?
+  title         String
+  assigneeName  String?
+  isCompleted   Boolean      @default(false)
+  dueDate       DateTime?
+  createdAt     DateTime     @default(now())
+
+  project       Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  meetingNote   MeetingNote? @relation(fields: [meetingNoteId], references: [id], onDelete: SetNull)
+
+  @@index([projectId])
+  @@map("action_items")
+}
+
+// -------------------------------------------------------------
+// GOVERNANCE & SUPPORTING FEATURES
+// -------------------------------------------------------------
+
+model AuditLog {
+  id           String      @id @default(uuid())
+  departmentId String?
+  userId       String?
+  action       String      // e.g. "USER_SUSPEND", "PROPOSAL_APPROVE", "EVAL_MODERATE"
+  resource     String      // e.g. "ProjectProposal", "Evaluation", "User"
+  resourceId   String?
+  detailsJson  String?     @db.Text
+  ipAddress    String?
+  createdAt    DateTime    @default(now())
+
+  department   Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  user         User?       @relation("ActorAuditLogs", fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([departmentId])
+  @@index([userId])
+  @@index([action])
+  @@map("audit_logs")
+}
+
+model ActivityLog {
+  id        String   @id @default(uuid())
+  userId    String
+  action    String
+  metadata  String?  @db.Text
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("activity_logs")
+}
+
+model SavedFilter {
+  id         String   @id @default(uuid())
+  userId     String
+  name       String
+  viewKey    String   // e.g. "PROPOSALS_TABLE", "PROJECTS_BOARD"
+  filterJson String   @db.Text
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@map("saved_filters")
+}
+
+model UserPreference {
+  id           String   @id @default(uuid())
+  userId       String   @unique
+  theme        String   @default("light") // light, dark, system
+  emailAlerts  Boolean  @default(true)
+  inAppAlerts  Boolean  @default(true)
+  compactView  Boolean  @default(false)
+  updatedAt    DateTime @updatedAt
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_preferences")
+}
+
+model DashboardPreference {
+  id           String   @id @default(uuid())
+  userId       String   @unique
+  widgetsOrder String   @db.Text // JSON string of widget IDs
+  updatedAt    DateTime @updatedAt
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("dashboard_preferences")
+}
+
+model IntegrationConfiguration {
+  id        String   @id @default(uuid())
+  service   String   @unique // e.g. "GITHUB", "EMAIL_SMTP"
+  configKey String
+  valueJson String   @db.Text
+  isEnabled Boolean  @default(false)
+  updatedAt DateTime @updatedAt
+
+  @@map("integration_configurations")
+}
+
+model ExportJob {
+  id          String   @id @default(uuid())
+  userId      String
+  exportType  String   // PDF, EXCEL, CSV
+  status      String   @default("COMPLETED")
+  downloadUrl String?
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@map("export_jobs")
+}
+
+model BackupRecord {
+  id          String   @id @default(uuid())
+  fileName    String
+  fileSizeBytes BigInt
+  status      String   // SUCCESS, FAILED
+  checksum    String
+  createdAt   DateTime @default(now())
+
+  @@map("backup_records")
+}
+
+model AIRequestLog {
+  id           String   @id @default(uuid())
+  userId       String
+  feature      String   // PROPOSAL_SUMMARY, RUBRIC_SUGGESTION
+  promptTokens Int
+  status       String
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+  @@map("ai_request_logs")
+}

@@ -1,0 +1,90 @@
+name: neuroforge-private-staging
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB in .env.deploy}
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER in .env.deploy}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env.deploy}
+    volumes:
+      - neuroforge_pgdata:/var/lib/postgresql/data
+    networks:
+      - data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    init: true
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL in .env.deploy}
+      CORS_ORIGINS: ${PUBLIC_ORIGIN:?Set PUBLIC_ORIGIN in .env.deploy}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      TAVILY_API_KEY: ${TAVILY_API_KEY:-}
+    depends_on:
+      db:
+        condition: service_healthy
+    expose:
+      - "8000"
+    networks:
+      - frontend
+      - data
+      - egress
+    healthcheck:
+      test: ["CMD", "python", "-c", "import json,urllib.request,sys; d=json.load(urllib.request.urlopen('http://127.0.0.1:8000/api/health',timeout=3)); sys.exit(0 if d.get('database') == 'ok' else 1)"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  gateway:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.frontend
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "${PUBLIC_BIND:-127.0.0.1}:${HTTPS_PORT:-8443}:443"
+    secrets:
+      - nginx_htpasswd
+      - tls_fullchain
+      - tls_privkey
+    networks:
+      - frontend
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  neuroforge_pgdata:
+    name: neuroforge_private_staging_pgdata
+
+networks:
+  frontend:
+    internal: true
+  data:
+    internal: true
+  egress:
+    driver: bridge
+
+secrets:
+  nginx_htpasswd:
+    file: ./deploy/secrets/htpasswd
+  tls_fullchain:
+    file: ./deploy/secrets/fullchain.pem
+  tls_privkey:
+    file: ./deploy/secrets/privkey.pem
