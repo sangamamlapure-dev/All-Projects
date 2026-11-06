@@ -1,1 +1,36 @@
 
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "frontend": {
+      "root": "ALL NEUROFORGE-AI-RESEARCH-DECISION-SYSTEM",
+      "framework": "vite"
+    },
+    "backend": {
+      "root": "ALL NEUROFORGE-AI-RESEARCH-DECISION-SYSTEM/backend",
+      "framework": "fastapi",
+      "entrypoint": "app.main:app"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api",
+      "destination": {
+        "service": "backend"
+      }
+    },
+    {
+      "source": "/api/(.*)",
+      "destination": {
+        "service": "backend"
+      }
+    },
+    {
+      "source": "/(.*)",
+      "destination": {
+        "service": "frontend"
+      }
+    }
+  ]
+}
+
